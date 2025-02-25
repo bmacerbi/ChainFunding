@@ -1,0 +1,6 @@
+# ESLint cache
+.eslintcache
+
+# Webpack and other cache files
+.cache/
+node_modules/
