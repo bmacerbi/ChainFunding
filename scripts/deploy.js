@@ -1,15 +1,24 @@
 const hre = require("hardhat");
 
 async function main() {
-  const TuringVoting = await hre.ethers.getContractFactory("TuringVoting");
-  const turingVoting = await TuringVoting.deploy();
+  const DonationFactory = await hre.ethers.getContractFactory("DonationFactory");
 
-  await turingVoting.waitForDeployment();
+  const donationFactory = await DonationFactory.deploy();
 
-  console.log("TuringVoting deployed to:", await turingVoting.getAddress());
+  await donationFactory.waitForDeployment();
+
+  console.log("DonationFactory deployed to:", await donationFactory.getAddress());
+
+  const tx = await donationFactory.createCampaign("Sample Campaign");
+  await tx.wait();
+
+  const campaigns = await donationFactory.getCampaigns();
+  console.log("Sample Campaign deployed to:", campaigns[0]);
 }
 
-main().catch((error) => {
-  console.error(error);
-  process.exitCode = 1;
-});
+main()
+  .then(() => process.exit(0))
+  .catch((error) => {
+    console.error(error);
+    process.exit(1);
+  });
