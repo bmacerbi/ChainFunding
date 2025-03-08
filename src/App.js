@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { ethers } from 'ethers';
 import DonationFactory from './DonationFactory.json';
 import DonationCampaign from './DonationCampaign.json';
-import './App.css'; // Import a CSS file for styling
+import './App.css';
 
 const factoryAddress = '0x5FbDB2315678afecb367f032d93F642f64180aa3';
 
@@ -38,6 +38,16 @@ function App() {
             })
           );
           setCampaigns(campaigns);
+
+          factory.on("CampaignCreated", async (campaignAddress, name) => {
+            const campaign = new ethers.Contract(campaignAddress, DonationCampaign.abi, signer);
+            const totalDonations = await campaign.totalDonations();
+            setCampaigns((prevCampaigns) => [
+              ...prevCampaigns,
+              { address: campaignAddress, name, totalDonations },
+            ]);
+          });
+
         } catch (error) {
           console.error("Error connecting to MetaMask:", error);
           alert("Failed to connect to MetaMask. Please try again.");
@@ -47,7 +57,13 @@ function App() {
       }
     }
     init();
-  }, []);
+
+    return () => {
+      if (factory) {
+        factory.removeAllListeners("CampaignCreated");
+      }
+    };
+  }, []); 
 
   const createCampaign = async () => {
     if (!isMetaMaskConnected) {
@@ -59,18 +75,7 @@ function App() {
       try {
         const tx = await factory.createCampaign(newCampaignName);
         await tx.wait();
-        setNewCampaignName('');
-
-        const campaignAddresses = await factory.getCampaigns();
-        const campaigns = await Promise.all(
-          campaignAddresses.map(async (address) => {
-            const campaign = new ethers.Contract(address, DonationCampaign.abi, signer);
-            const name = await campaign.name();
-            const totalDonations = await campaign.totalDonations();
-            return { address, name, totalDonations };
-          })
-        );
-        setCampaigns(campaigns);
+        setNewCampaignName(''); 
       } catch (error) {
         console.error("Error creating campaign:", error);
         alert("Failed to create campaign. Please try again.");
