@@ -13,6 +13,7 @@ function App() {
   const [campaigns, setCampaigns] = useState([]);
   const [newCampaignName, setNewCampaignName] = useState('');
   const [isMetaMaskConnected, setIsMetaMaskConnected] = useState(false);
+  const [userAddress, setUserAddress] = useState('');
 
   useEffect(() => {
     async function init() {
@@ -22,26 +23,34 @@ function App() {
           const provider = new ethers.BrowserProvider(window.ethereum);
           const signer = await provider.getSigner();
           const factory = new ethers.Contract(factoryAddress, DonationFactory.abi, signer);
-
           setProvider(provider);
           setSigner(signer);
           setFactory(factory);
           setIsMetaMaskConnected(true);
+          const address = await signer.getAddress();
+          setUserAddress(address);
 
-          // Load initial campaigns
           const campaignAddresses = await factory.getCampaigns();
           const campaigns = await Promise.all(
             campaignAddresses.map(async (address) => {
               const campaign = new ethers.Contract(address, DonationCampaign.abi, signer);
               const name = await campaign.name();
               const totalDonations = await campaign.totalDonations();
-              return { address, name, totalDonations };
+              const creator = await campaign.owner();
+              return { address, name, totalDonations, creator };
             })
           );
           setCampaigns(campaigns);
         } catch (error) {
           console.error("Error connecting to MetaMask:", error);
-          alert("Failed to connect to MetaMask. Please try again.");
+
+          if (error.code === 4001) {
+            alert("Please connect your MetaMask account to use this dApp.");
+          } else if (error.code === -32002) {
+            alert("MetaMask is already processing a request. Please check your MetaMask extension.");
+          } else {
+            alert("Failed to connect to MetaMask. Please try again.");
+          }
         }
       } else {
         alert('Please install MetaMask!');
@@ -55,9 +64,10 @@ function App() {
       const handleCampaignCreated = async (campaignAddress, name) => {
         const campaign = new ethers.Contract(campaignAddress, DonationCampaign.abi, signer);
         const totalDonations = await campaign.totalDonations();
+        const creator = await campaign.creator();
         setCampaigns((prevCampaigns) => [
           ...prevCampaigns,
-          { address: campaignAddress, name, totalDonations },
+          { address: campaignAddress, name, totalDonations, creator },
         ]);
       };
 
@@ -132,6 +142,30 @@ function App() {
     }
   };
 
+  const withdrawFunds = async (campaignAddress) => {
+    if (!isMetaMaskConnected) {
+      alert('Please connect to MetaMask first.');
+      return;
+    }
+
+    try {
+      const campaign = new ethers.Contract(campaignAddress, DonationCampaign.abi, signer);
+      const tx = await campaign.withdraw();
+      await tx.wait();
+      alert('Funds withdrawn successfully!');
+
+      const updatedCampaigns = campaigns.map((c) =>
+        c.address === campaignAddress
+          ? { ...c, totalDonations: 0 } 
+          : c
+      );
+      setCampaigns(updatedCampaigns);
+    } catch (error) {
+      console.error("Error withdrawing funds:", error);
+      alert("Failed to withdraw funds. Please try again.");
+    }
+  };
+
   return (
     <div className="App">
       <header className="header">
@@ -176,6 +210,14 @@ function App() {
                   >
                     Donate
                   </button>
+                  {campaign.creator === userAddress && (
+                    <button
+                      onClick={() => withdrawFunds(campaign.address)}
+                      className="btn-withdraw"
+                    >
+                      Withdraw Funds
+                    </button>
+                  )}
                 </div>
               </div>
             ))}

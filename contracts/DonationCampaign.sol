@@ -19,14 +19,17 @@ contract DonationCampaign is Initializable {
         owner = _owner;
     }
 
-    function donate() public payable {
+    function donate() external payable {
         require(msg.value > 0, "Donation amount must be greater than 0.");
         totalDonations += msg.value;
         emit DonationReceived(msg.sender, msg.value);
     }
 
-    function withdraw() public {
+    function withdraw() external {
         require(msg.sender == owner, "Only the owner can withdraw funds.");
+        uint256 balance = address(this).balance;
+        require(balance > 0, "No funds to withdraw");
+        
         payable(owner).transfer(address(this).balance);
     }
 }
