@@ -36,8 +36,8 @@ function App() {
               const campaign = new ethers.Contract(address, DonationCampaign.abi, signer);
               const name = await campaign.name();
               const totalDonations = await campaign.totalDonations();
-              const creator = await campaign.owner();
-              return { address, name, totalDonations, creator };
+              const owner = await campaign.owner();
+              return { address, name, totalDonations, owner };
             })
           );
           setCampaigns(campaigns);
@@ -64,10 +64,10 @@ function App() {
       const handleCampaignCreated = async (campaignAddress, name) => {
         const campaign = new ethers.Contract(campaignAddress, DonationCampaign.abi, signer);
         const totalDonations = await campaign.totalDonations();
-        const creator = await campaign.creator();
+        const owner = await campaign.owner();
         setCampaigns((prevCampaigns) => [
           ...prevCampaigns,
-          { address: campaignAddress, name, totalDonations, creator },
+          { address: campaignAddress, name, totalDonations, owner },
         ]);
       };
 
@@ -210,7 +210,7 @@ function App() {
                   >
                     Donate
                   </button>
-                  {campaign.creator === userAddress && (
+                  {campaign.owner === userAddress && (
                     <button
                       onClick={() => withdrawFunds(campaign.address)}
                       className="btn-withdraw"
