@@ -29,7 +29,7 @@ function App() {
           setIsMetaMaskConnected(true);
           const address = await signer.getAddress();
           setUserAddress(address);
-
+  
           const campaignAddresses = await factory.getCampaigns();
           const campaigns = await Promise.all(
             campaignAddresses.map(async (address) => {
@@ -37,13 +37,13 @@ function App() {
               const name = await campaign.name();
               const totalDonations = await campaign.totalDonations();
               const owner = await campaign.owner();
-              return { address, name, totalDonations, owner };
+              const balance = await provider.getBalance(address);
+              return { address, name, totalDonations, owner, balance };
             })
           );
           setCampaigns(campaigns);
         } catch (error) {
           console.error("Error connecting to MetaMask:", error);
-
           if (error.code === 4001) {
             alert("Please connect your MetaMask account to use this dApp.");
           } else if (error.code === -32002) {
@@ -58,50 +58,63 @@ function App() {
     }
     init();
   }, []);
-
+  
   useEffect(() => {
     if (factory) {
       const handleCampaignCreated = async (campaignAddress, name) => {
         const campaign = new ethers.Contract(campaignAddress, DonationCampaign.abi, signer);
         const totalDonations = await campaign.totalDonations();
         const owner = await campaign.owner();
+        const balance = await provider.getBalance(campaignAddress);
         setCampaigns((prevCampaigns) => [
           ...prevCampaigns,
-          { address: campaignAddress, name, totalDonations, owner },
+          { address: campaignAddress, name, totalDonations, owner, balance },
         ]);
       };
-
+  
       factory.on("CampaignCreated", handleCampaignCreated);
-
+  
       return () => {
         factory.off("CampaignCreated", handleCampaignCreated);
       };
     }
-  }, [factory, signer]);
+  }, [factory, signer, provider]);
 
   useEffect(() => {
     if (campaigns.length > 0 && provider) {
       const donationEventListeners = campaigns.map((campaign) => {
         const campaignContract = new ethers.Contract(campaign.address, DonationCampaign.abi, provider);
-
+  
         const handleDonationReceived = async (donor, amount) => {
           setCampaigns((prevCampaigns) =>
             prevCampaigns.map((c) =>
               c.address === campaign.address
-                ? { ...c, totalDonations: c.totalDonations + amount }
+                ? { ...c, totalDonations: c.totalDonations + amount, balance: c.balance + amount }
                 : c
             )
           );
         };
-
+  
+        const handleFundsWithdrawn = async (owner, amount) => {
+          setCampaigns((prevCampaigns) =>
+            prevCampaigns.map((c) =>
+              c.address === campaign.address
+                ? { ...c, balance: 0 }
+                : c
+            )
+          );
+        };
+  
         campaignContract.on("DonationReceived", handleDonationReceived);
-
-        return { campaignContract, handleDonationReceived };
+        campaignContract.on("FundsWithdrawn", handleFundsWithdrawn);
+  
+        return { campaignContract, handleDonationReceived, handleFundsWithdrawn };
       });
-
+  
       return () => {
-        donationEventListeners.forEach(({ campaignContract, handleDonationReceived }) => {
+        donationEventListeners.forEach(({ campaignContract, handleDonationReceived, handleFundsWithdrawn }) => {
           campaignContract.off("DonationReceived", handleDonationReceived);
+          campaignContract.off("FundsWithdrawn", handleFundsWithdrawn);
         });
       };
     }
@@ -147,19 +160,12 @@ function App() {
       alert('Please connect to MetaMask first.');
       return;
     }
-
+  
     try {
       const campaign = new ethers.Contract(campaignAddress, DonationCampaign.abi, signer);
       const tx = await campaign.withdraw();
       await tx.wait();
       alert('Funds withdrawn successfully!');
-
-      const updatedCampaigns = campaigns.map((c) =>
-        c.address === campaignAddress
-          ? { ...c, totalDonations: 0 } 
-          : c
-      );
-      setCampaigns(updatedCampaigns);
     } catch (error) {
       console.error("Error withdrawing funds:", error);
       alert("Failed to withdraw funds. Please try again.");
@@ -197,6 +203,7 @@ function App() {
               <div key={index} className="campaign-card">
                 <h3>{campaign.name}</h3>
                 <p>Total Donations: {ethers.formatEther(campaign.totalDonations)} ETH</p>
+                <p>Campaign Balance: {ethers.formatEther(campaign.balance)} ETH</p>
                 <div className="donate-section">
                   <input
                     type="text"
