@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ethers } from 'ethers';
-import DonationFactory from './DonationFactory.json';
-import DonationCampaign from './DonationCampaign.json';
+import DonationFactory from './artifacts/contracts/DonationFactory.sol/DonationFactory.json';
+import DonationCampaign from './artifacts/contracts/DonationCampaign.sol/DonationCampaign.json';
 import './App.css';
 
 const factoryAddress = '0x5FbDB2315678afecb367f032d93F642f64180aa3';
