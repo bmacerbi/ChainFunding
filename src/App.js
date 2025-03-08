@@ -28,6 +28,7 @@ function App() {
           setFactory(factory);
           setIsMetaMaskConnected(true);
 
+          // Load initial campaigns
           const campaignAddresses = await factory.getCampaigns();
           const campaigns = await Promise.all(
             campaignAddresses.map(async (address) => {
@@ -67,6 +68,34 @@ function App() {
       };
     }
   }, [factory, signer]);
+
+  useEffect(() => {
+    if (campaigns.length > 0 && provider) {
+      const donationEventListeners = campaigns.map((campaign) => {
+        const campaignContract = new ethers.Contract(campaign.address, DonationCampaign.abi, provider);
+
+        const handleDonationReceived = async (donor, amount) => {
+          setCampaigns((prevCampaigns) =>
+            prevCampaigns.map((c) =>
+              c.address === campaign.address
+                ? { ...c, totalDonations: c.totalDonations + amount }
+                : c
+            )
+          );
+        };
+
+        campaignContract.on("DonationReceived", handleDonationReceived);
+
+        return { campaignContract, handleDonationReceived };
+      });
+
+      return () => {
+        donationEventListeners.forEach(({ campaignContract, handleDonationReceived }) => {
+          campaignContract.off("DonationReceived", handleDonationReceived);
+        });
+      };
+    }
+  }, [campaigns, provider]);
 
   const createCampaign = async () => {
     if (!isMetaMaskConnected) {
