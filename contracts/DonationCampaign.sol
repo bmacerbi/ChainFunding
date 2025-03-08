@@ -9,6 +9,7 @@ contract DonationCampaign is Initializable {
     uint256 public totalDonations;
 
     event DonationReceived(address donor, uint256 amount);
+    event FundsWithdrawn(address owner, uint256 amount); 
 
     constructor() {
         _disableInitializers();
@@ -29,7 +30,8 @@ contract DonationCampaign is Initializable {
         require(msg.sender == owner, "Only the owner can withdraw funds.");
         uint256 balance = address(this).balance;
         require(balance > 0, "No funds to withdraw");
-        
-        payable(owner).transfer(address(this).balance);
+
+        payable(owner).transfer(balance);
+        emit FundsWithdrawn(owner, balance); 
     }
 }
