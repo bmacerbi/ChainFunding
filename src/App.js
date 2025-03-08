@@ -38,16 +38,6 @@ function App() {
             })
           );
           setCampaigns(campaigns);
-
-          factory.on("CampaignCreated", async (campaignAddress, name) => {
-            const campaign = new ethers.Contract(campaignAddress, DonationCampaign.abi, signer);
-            const totalDonations = await campaign.totalDonations();
-            setCampaigns((prevCampaigns) => [
-              ...prevCampaigns,
-              { address: campaignAddress, name, totalDonations },
-            ]);
-          });
-
         } catch (error) {
           console.error("Error connecting to MetaMask:", error);
           alert("Failed to connect to MetaMask. Please try again.");
@@ -57,13 +47,26 @@ function App() {
       }
     }
     init();
+  }, []);
 
-    return () => {
-      if (factory) {
-        factory.removeAllListeners("CampaignCreated");
-      }
-    };
-  }, []); 
+  useEffect(() => {
+    if (factory) {
+      const handleCampaignCreated = async (campaignAddress, name) => {
+        const campaign = new ethers.Contract(campaignAddress, DonationCampaign.abi, signer);
+        const totalDonations = await campaign.totalDonations();
+        setCampaigns((prevCampaigns) => [
+          ...prevCampaigns,
+          { address: campaignAddress, name, totalDonations },
+        ]);
+      };
+
+      factory.on("CampaignCreated", handleCampaignCreated);
+
+      return () => {
+        factory.off("CampaignCreated", handleCampaignCreated);
+      };
+    }
+  }, [factory, signer]);
 
   const createCampaign = async () => {
     if (!isMetaMaskConnected) {
