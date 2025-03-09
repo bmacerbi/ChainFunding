@@ -4,27 +4,27 @@ import DonationCampaign from './artifacts/contracts/DonationCampaign.sol/Donatio
 
 const CampaignDetails = ({ campaignAddress, provider, signer, onClose }) => {
   const [transactions, setTransactions] = useState([]);
-  const [sortOrder, setSortOrder] = useState('desc'); 
 
   useEffect(() => {
     async function fetchTransactions() {
       const campaign = new ethers.Contract(campaignAddress, DonationCampaign.abi, provider);
       const txHistory = await campaign.getTransactions();
-
-      const txHistoryCopy = [...txHistory];
-
+  
+      const txHistoryCopy = txHistory.map((tx) => ({
+        user: tx.user,
+        amount: tx.amount,
+        timestamp: tx.timestamp,
+        transactionType: Number(tx.transactionType),
+      }));
+  
       const sortedTransactions = txHistoryCopy.sort((a, b) => {
-        if (sortOrder === 'desc') {
-          return b.amount > a.amount ? 1 : -1; 
-        } else {
-          return a.amount > b.amount ? 1 : -1; 
-        }
+        return Number(b.timestamp) - Number(a.timestamp);
       });
-
+  
       setTransactions(sortedTransactions);
     }
     fetchTransactions();
-  }, [campaignAddress, provider, sortOrder]);
+  }, [campaignAddress, provider]);
 
   const handleBackdropClick = (e) => {
     if (e.target === e.currentTarget) {
@@ -32,8 +32,33 @@ const CampaignDetails = ({ campaignAddress, provider, signer, onClose }) => {
     }
   };
 
-  const toggleSortOrder = () => {
-    setSortOrder((prevOrder) => (prevOrder === 'desc' ? 'asc' : 'desc'));
+  const formatTransactionType = (type) => {
+    switch (type) {
+      case 0:
+        return "Donation";
+      case 1:
+        return "Withdrawal";
+      case 2:
+        return "Campaign Creation";
+      default:
+        return "Unknown";
+    }
+  };
+
+  const formatAmount = (amount, transactionType) => {
+    if (transactionType === 2) {
+      return "N/A";
+    }
+
+    const formattedAmount = ethers.formatEther(amount);
+    switch (transactionType) {
+      case 0:
+        return <span className="donation-amount">+{formattedAmount} ETH</span>;
+      case 1:
+        return <span className="withdrawal-amount">-{formattedAmount} ETH</span>;
+      default:
+        return formattedAmount;
+    }
   };
 
   return (
@@ -43,14 +68,12 @@ const CampaignDetails = ({ campaignAddress, provider, signer, onClose }) => {
           &times;
         </button>
         <h2>Transaction History</h2>
-        <button onClick={toggleSortOrder} className="sort-btn">
-          Sort by Amount ({sortOrder === 'desc' ? 'Descending' : 'Ascending'})
-        </button>
         <div className="table-container">
           <table>
             <thead>
               <tr>
-                <th>Donor</th>
+                <th>User</th>
+                <th>Type</th>
                 <th>Amount (ETH)</th>
                 <th>Timestamp</th>
               </tr>
@@ -58,8 +81,9 @@ const CampaignDetails = ({ campaignAddress, provider, signer, onClose }) => {
             <tbody>
               {transactions.map((tx, index) => (
                 <tr key={index}>
-                  <td>{tx.donor}</td>
-                  <td>{ethers.formatEther(tx.amount)}</td>
+                  <td>{tx.user}</td>
+                  <td>{formatTransactionType(tx.transactionType)}</td>
+                  <td>{formatAmount(tx.amount, tx.transactionType)}</td>
                   <td>{new Date(Number(tx.timestamp) * 1000).toLocaleString()}</td>
                 </tr>
               ))}

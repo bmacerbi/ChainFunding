@@ -8,10 +8,17 @@ contract DonationCampaign is Initializable {
     string public name;
     uint256 public totalDonations;
 
+    enum TransactionType {
+        Donation,
+        Withdrawal,
+        CampaignCreation
+    }
+
     struct Transaction {
-        address donor;
+        address user;
         uint256 amount;
         uint256 timestamp;
+        TransactionType transactionType;
     }
 
     Transaction[] public transactions;
@@ -26,12 +33,24 @@ contract DonationCampaign is Initializable {
     function initialize(string memory _name, address _owner) external initializer {
         name = _name;
         owner = _owner;
+
+        transactions.push(Transaction({
+            user: _owner,
+            amount: 0,
+            timestamp: block.timestamp,
+            transactionType: TransactionType.CampaignCreation
+        }));
     }
 
     function donate() external payable {
         require(msg.value > 0, "Donation amount must be greater than 0.");
         totalDonations += msg.value;
-        transactions.push(Transaction(msg.sender, msg.value, block.timestamp));
+        transactions.push(Transaction({
+            user: msg.sender,
+            amount: msg.value,
+            timestamp: block.timestamp,
+            transactionType: TransactionType.Donation
+        }));
         emit DonationReceived(msg.sender, msg.value);
     }
 
@@ -41,6 +60,12 @@ contract DonationCampaign is Initializable {
         require(balance > 0, "No funds to withdraw");
 
         payable(owner).transfer(balance);
+        transactions.push(Transaction({
+            user: msg.sender,
+            amount: balance,
+            timestamp: block.timestamp,
+            transactionType: TransactionType.Withdrawal
+        }));
         emit FundsWithdrawn(owner, balance);
     }
 

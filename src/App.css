@@ -222,3 +222,13 @@ th {
 .sort-btn:hover {
   background-color: #45a049;
 }
+
+.donation-amount {
+  color: green;
+  font-weight: bold;
+}
+
+.withdrawal-amount {
+  color: red;
+  font-weight: bold;
+}

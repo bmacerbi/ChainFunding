@@ -91,7 +91,12 @@ function App() {
           setCampaigns((prevCampaigns) =>
             prevCampaigns.map((c) =>
               c.address === campaign.address
-                ? { ...c, totalDonations: c.totalDonations + amount, balance: c.balance + amount }
+                ? { ...c,
+                    // eslint-disable-next-line no-undef
+                    totalDonations: BigInt(c.totalDonations) + BigInt(amount),
+                    // eslint-disable-next-line no-undef
+                    balance: BigInt(c.balance) + BigInt(amount)
+                  }
                 : c
             )
           );
@@ -205,7 +210,7 @@ function App() {
               <div key={index} className="campaign-card">
                 <h3>{campaign.name}</h3>
                 <p>Total Donations: {ethers.formatEther(campaign.totalDonations)} ETH</p>
-                <p>Campaign Balance: {ethers.formatEther(campaign.balance)} ETH</p>
+                <p>Current Balance: {ethers.formatEther(campaign.balance)} ETH</p>
                 <div className="donate-section">
                   <input
                     type="text"
