@@ -232,3 +232,34 @@ th {
   color: red;
   font-weight: bold;
 }
+
+.search-bar {
+  position: relative;
+  width: 100%;
+  max-width: 400px; /* Adjust the width as needed */
+  margin-bottom: 20px;
+}
+
+.search-bar .search-input {
+  width: 100%;
+  padding: 10px 10px 10px 40px; /* Add padding for the icon */
+  font-size: 14px; /* Smaller font size */
+  border: 1px solid #ccc;
+  border-radius: 25px; /* Rounded corners */
+  outline: none;
+  transition: border-color 0.3s ease;
+}
+
+.search-bar .search-input:focus {
+  border-color: #007bff; /* Highlight border on focus */
+}
+
+.search-bar .search-icon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #888; /* Icon color */
+  font-size: 16px;
+  pointer-events: none; /* Ensure the icon doesn't interfere with input */
+}

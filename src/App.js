@@ -16,6 +16,7 @@ function App() {
   const [isMetaMaskConnected, setIsMetaMaskConnected] = useState(false);
   const [userAddress, setUserAddress] = useState('');
   const [selectedCampaign, setSelectedCampaign] = useState(null); 
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     async function init() {
@@ -179,6 +180,10 @@ function App() {
     }
   };
 
+  const filteredCampaigns = campaigns.filter((campaign) =>
+    campaign.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   return (
     <div className="App">
       <header className="header">
@@ -205,8 +210,18 @@ function App() {
 
         <section className="campaigns">
           <h2>Active Campaigns</h2>
+          <div className="search-bar">
+            <i className="fas fa-search search-icon"></i>
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search campaigns by name"
+              className="search-input"
+            />
+          </div>
           <div className="campaign-list">
-            {campaigns.map((campaign, index) => (
+            {filteredCampaigns.map((campaign, index) => (
               <div key={index} className="campaign-card">
                 <h3>{campaign.name}</h3>
                 <p>Total Donations: {ethers.formatEther(campaign.totalDonations)} ETH</p>
