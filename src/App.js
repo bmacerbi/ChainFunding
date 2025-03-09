@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { ethers } from 'ethers';
 import DonationFactory from './artifacts/contracts/DonationFactory.sol/DonationFactory.json';
 import DonationCampaign from './artifacts/contracts/DonationCampaign.sol/DonationCampaign.json';
+import CampaignDetails from './CampaignDetails'; 
 import './App.css';
 
 const factoryAddress = '0x5FbDB2315678afecb367f032d93F642f64180aa3';
@@ -14,6 +15,7 @@ function App() {
   const [newCampaignName, setNewCampaignName] = useState('');
   const [isMetaMaskConnected, setIsMetaMaskConnected] = useState(false);
   const [userAddress, setUserAddress] = useState('');
+  const [selectedCampaign, setSelectedCampaign] = useState(null); 
 
   useEffect(() => {
     async function init() {
@@ -29,7 +31,7 @@ function App() {
           setIsMetaMaskConnected(true);
           const address = await signer.getAddress();
           setUserAddress(address);
-  
+
           const campaignAddresses = await factory.getCampaigns();
           const campaigns = await Promise.all(
             campaignAddresses.map(async (address) => {
@@ -58,7 +60,7 @@ function App() {
     }
     init();
   }, []);
-  
+
   useEffect(() => {
     if (factory) {
       const handleCampaignCreated = async (campaignAddress, name) => {
@@ -71,9 +73,9 @@ function App() {
           { address: campaignAddress, name, totalDonations, owner, balance },
         ]);
       };
-  
+
       factory.on("CampaignCreated", handleCampaignCreated);
-  
+
       return () => {
         factory.off("CampaignCreated", handleCampaignCreated);
       };
@@ -84,7 +86,7 @@ function App() {
     if (campaigns.length > 0 && provider) {
       const donationEventListeners = campaigns.map((campaign) => {
         const campaignContract = new ethers.Contract(campaign.address, DonationCampaign.abi, provider);
-  
+
         const handleDonationReceived = async (donor, amount) => {
           setCampaigns((prevCampaigns) =>
             prevCampaigns.map((c) =>
@@ -94,7 +96,7 @@ function App() {
             )
           );
         };
-  
+
         const handleFundsWithdrawn = async (owner, amount) => {
           setCampaigns((prevCampaigns) =>
             prevCampaigns.map((c) =>
@@ -104,13 +106,13 @@ function App() {
             )
           );
         };
-  
+
         campaignContract.on("DonationReceived", handleDonationReceived);
         campaignContract.on("FundsWithdrawn", handleFundsWithdrawn);
-  
+
         return { campaignContract, handleDonationReceived, handleFundsWithdrawn };
       });
-  
+
       return () => {
         donationEventListeners.forEach(({ campaignContract, handleDonationReceived, handleFundsWithdrawn }) => {
           campaignContract.off("DonationReceived", handleDonationReceived);
@@ -130,7 +132,7 @@ function App() {
       try {
         const tx = await factory.createCampaign(newCampaignName);
         await tx.wait();
-        setNewCampaignName(''); 
+        setNewCampaignName('');
       } catch (error) {
         console.error("Error creating campaign:", error);
         alert("Failed to create campaign. Please try again.");
@@ -160,7 +162,7 @@ function App() {
       alert('Please connect to MetaMask first.');
       return;
     }
-  
+
     try {
       const campaign = new ethers.Contract(campaignAddress, DonationCampaign.abi, signer);
       const tx = await campaign.withdraw();
@@ -212,25 +214,56 @@ function App() {
                     className="input-field"
                   />
                   <button
-                    onClick={() => donate(campaign.address, document.getElementById(`amount-${index}`).value)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      donate(campaign.address, document.getElementById(`amount-${index}`).value);
+                    }}
                     className="btn-secondary"
                   >
                     Donate
                   </button>
                   {campaign.owner === userAddress && (
                     <button
-                      onClick={() => withdrawFunds(campaign.address)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        withdrawFunds(campaign.address);
+                      }}
                       className="btn-withdraw"
                     >
                       Withdraw Funds
                     </button>
                   )}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setSelectedCampaign(campaign.address);
+                    }}
+                    className="btn-history"
+                  >
+                    Show History
+                  </button>
                 </div>
               </div>
             ))}
           </div>
         </section>
       </main>
+
+      {selectedCampaign && (
+        <div className="modal">
+          <div className="modal-content">
+            <button onClick={() => setSelectedCampaign(null)} className="close-btn">
+              &times;
+            </button>
+            <CampaignDetails
+              campaignAddress={selectedCampaign}
+              provider={provider}
+              signer={signer}
+              onClose={() => setSelectedCampaign(null)}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

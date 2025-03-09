@@ -8,8 +8,16 @@ contract DonationCampaign is Initializable {
     string public name;
     uint256 public totalDonations;
 
+    struct Transaction {
+        address donor;
+        uint256 amount;
+        uint256 timestamp;
+    }
+
+    Transaction[] public transactions;
+
     event DonationReceived(address donor, uint256 amount);
-    event FundsWithdrawn(address owner, uint256 amount); 
+    event FundsWithdrawn(address owner, uint256 amount);
 
     constructor() {
         _disableInitializers();
@@ -23,6 +31,7 @@ contract DonationCampaign is Initializable {
     function donate() external payable {
         require(msg.value > 0, "Donation amount must be greater than 0.");
         totalDonations += msg.value;
+        transactions.push(Transaction(msg.sender, msg.value, block.timestamp));
         emit DonationReceived(msg.sender, msg.value);
     }
 
@@ -32,6 +41,10 @@ contract DonationCampaign is Initializable {
         require(balance > 0, "No funds to withdraw");
 
         payable(owner).transfer(balance);
-        emit FundsWithdrawn(owner, balance); 
+        emit FundsWithdrawn(owner, balance);
+    }
+
+    function getTransactions() external view returns (Transaction[] memory) {
+        return transactions;
     }
 }
