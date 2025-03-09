@@ -68,22 +68,21 @@ body {
 }
 
 .btn-secondary {
-  background-color: #03dac6;
-  color: white;
-}
-
-.btn-secondary:hover {
-  background-color: #018786;
-}
-
-.btn-withdraw {
   background-color: #12d101;
   color: white;
 }
 
+.btn-secondary:hover {
+  background-color: #0a6402;
+}
+
+.btn-withdraw {
+  background-color: #d1012e;
+  color: white;
+}
 
 .btn-history {
-  background-color: #d1012e;
+  background-color: #03dac6;
   color: white;
 }
 
@@ -205,24 +204,6 @@ th {
   background-color: #f2f2f2;
 }
 
-.sort-btn {
-  background-color: #4CAF50; 
-  border: none;
-  color: white;
-  padding: 8px 16px;
-  text-align: center;
-  text-decoration: none;
-  display: inline-block;
-  font-size: 14px;
-  margin: 10px 0;
-  cursor: pointer;
-  border-radius: 4px;
-}
-
-.sort-btn:hover {
-  background-color: #45a049;
-}
-
 .donation-amount {
   color: green;
   font-weight: bold;
@@ -234,32 +215,69 @@ th {
 }
 
 .search-bar {
-  position: relative;
-  width: 100%;
-  max-width: 400px; /* Adjust the width as needed */
-  margin-bottom: 20px;
-}
-
-.search-bar .search-input {
-  width: 100%;
-  padding: 10px 10px 10px 40px; /* Add padding for the icon */
-  font-size: 14px; /* Smaller font size */
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 200px;
+  max-width: 300px;
+  padding: 8px 12px;
   border: 1px solid #ccc;
-  border-radius: 25px; /* Rounded corners */
-  outline: none;
+  border-radius: 25px;
   transition: border-color 0.3s ease;
 }
 
-.search-bar .search-input:focus {
-  border-color: #007bff; /* Highlight border on focus */
+.search-bar .search-input {
+  flex: 1;
+  border: none;
+  outline: none;
+  font-size: 14px;
+  padding: 8px 0;
+  background: transparent;
+}
+
+.search-bar:focus-within {
+  border-color: #007bff;
 }
 
 .search-bar .search-icon {
-  position: absolute;
-  left: 12px;
-  top: 50%;
-  transform: translateY(-50%);
-  color: #888; /* Icon color */
+  color: #888;
   font-size: 16px;
-  pointer-events: none; /* Ensure the icon doesn't interfere with input */
+  flex-shrink: 0;
+}
+
+.search-and-sort {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+/* Sort Options */
+.sort-options {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 120px;
+}
+
+.sort-options label {
+  font-size: 14px;
+  color: #555;
+  white-space: nowrap;
+}
+
+.sort-options .sort-select {
+  padding: 8px;
+  font-size: 14px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  outline: none;
+  cursor: pointer;
+}
+
+.sort-options .sort-select:focus {
+  border-color: #007bff;
 }

@@ -17,6 +17,7 @@ function App() {
   const [userAddress, setUserAddress] = useState('');
   const [selectedCampaign, setSelectedCampaign] = useState(null); 
   const [searchQuery, setSearchQuery] = useState('');
+  const [sortBy, setSortBy] = useState('name'); // Default sorting by name
 
   useEffect(() => {
     async function init() {
@@ -184,6 +185,15 @@ function App() {
     campaign.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  const sortedCampaigns = filteredCampaigns.sort((a, b) => {
+    if (sortBy === 'name') {
+      return a.name.localeCompare(b.name);
+    } else if (sortBy === 'totalDonations') {
+      return Number(b.totalDonations) - Number(a.totalDonations);
+    }
+    return 0;
+  });
+
   return (
     <div className="App">
       <header className="header">
@@ -210,18 +220,31 @@ function App() {
 
         <section className="campaigns">
           <h2>Active Campaigns</h2>
-          <div className="search-bar">
-            <i className="fas fa-search search-icon"></i>
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search campaigns by name"
-              className="search-input"
-            />
+          <div className="search-and-sort">
+            <div className="search-bar">
+              <i className="fas fa-search search-icon"></i>
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search campaigns by name"
+                className="search-input"
+              />
+            </div>
+            <div className="sort-options">
+              <label>Sort by:</label>
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value)}
+                className="sort-select"
+              >
+                <option value="name">Name</option>
+                <option value="totalDonations">Total Donations</option>
+              </select>
+            </div>
           </div>
           <div className="campaign-list">
-            {filteredCampaigns.map((campaign, index) => (
+            {sortedCampaigns.map((campaign, index) => (
               <div key={index} className="campaign-card">
                 <h3>{campaign.name}</h3>
                 <p>Total Donations: {ethers.formatEther(campaign.totalDonations)} ETH</p>
