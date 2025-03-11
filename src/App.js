@@ -5,7 +5,7 @@ import DonationCampaign from './artifacts/contracts/DonationCampaign.sol/Donatio
 import CampaignDetails from './CampaignDetails'; 
 import './App.css';
 
-const factoryAddress = '0x5FbDB2315678afecb367f032d93F642f64180aa3';
+const factoryAddress = '0xA416FEF123BC1E03Ae48660bD86dddABA6AD4AB3';
 
 function App() {
   const [provider, setProvider] = useState(null);
