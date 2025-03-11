@@ -1,13 +1,15 @@
 const hre = require("hardhat");
 
 async function main() {
+  const [deployer] = await hre.ethers.getSigners();
+  console.log("Deploying contracts with the account:", deployer.address);
+
   const DonationFactory = await hre.ethers.getContractFactory("DonationFactory");
-
   const donationFactory = await DonationFactory.deploy();
-
   await donationFactory.waitForDeployment();
-
-  console.log("DonationFactory deployed to:", await donationFactory.getAddress());
+  
+  const donationFactoryAddress = await donationFactory.getAddress();
+  console.log("DonationFactory deployed to:", donationFactoryAddress);
 
   const tx = await donationFactory.createCampaign("Sample Campaign");
   await tx.wait();
